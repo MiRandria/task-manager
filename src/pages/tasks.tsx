@@ -1,5 +1,6 @@
+import React, { ChangeEvent, useEffect, useRef } from 'react';
+import { useLocalStorage } from '../hooks/useLocalStorage'; // Import du hook useLocalStorage
 import useTaskManager from '@/store/useTaskManager';
-import React, { ChangeEvent, useRef } from 'react';
 
 interface Task {
   id: number;
@@ -17,8 +18,21 @@ const TaskManager = () => {
     deleteTask,
     setSearchTask,
   } = useTaskManager();
-  
-  const searchValue = useRef<string>(''); // Variable pour stocker la valeur de recherche
+
+  const searchValue = useRef<string>('');
+
+  // Utilisation du hook useLocalStorage pour stocker les tâches dans le Local Storage
+  const [storedTasks, setStoredTasks] = useLocalStorage('tasks', []);
+
+  // Utilisation de useEffect pour mettre à jour les tâches stockées lorsqu'elles changent
+  useEffect(() => {
+    setStoredTasks(tasks);
+  }, [tasks, setStoredTasks]);
+
+  useEffect(() => {
+    // Récupérer les tâches stockées depuis le Local Storage lors du chargement de la page
+    setSearchTask(storedTasks);
+  }, [setSearchTask, storedTasks]);
 
   const handleAddTask = () => {
     if (createTaskRef.current) {
@@ -43,12 +57,12 @@ const TaskManager = () => {
 
   const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
     const searchTerm = e.target.value.toLowerCase();
-    searchValue.current = searchTerm; // Mettre à jour la valeur de recherche
+    searchValue.current = searchTerm;
     setSearchTask(tasks);
   };
 
   const filteredTasks = tasks.filter((task) =>
-    task.title.toLowerCase().includes(searchValue.current) // Utiliser la valeur de recherche stockée
+    task.title.toLowerCase().includes(searchValue.current)
   );
 
   return (
