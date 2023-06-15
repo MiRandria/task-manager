@@ -1,20 +1,51 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
-
-/**
-  Calculates the time difference between the server time and client time.
-  @param {Date} serverTime - The server time.
-  @param {Date} clientTime - The client time.
-  @returns {string} The time difference in the format "{days} days, {hours} hours, {minutes} minutes, {seconds} seconds".
-*/
-const calculateTimeDifference = (server: Date, client: Date) => {};
+import { useEffect, useState } from "react";
 
 
-export default function Home() {
+const calculateTimeDifference = (serverTime: Date, clientTime: Date) => {
+  const timeDiff = Math.abs(serverTime.getTime() - clientTime.getTime());
+
+  const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+
+  return `${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds`;
+};
+
+
+export async function getServerSideProps() {
+  const serverTime = new Date(); // Replace this with your server time retrieval logic
+
+  return {
+    props: {
+      serverTime: serverTime.toString(),
+    },
+  };
+}
+
+export default function Home({ serverTime }: { serverTime: string }) {
   const router = useRouter();
+  const [clientTime, setClientTime] = useState(new Date());
+  const [timeDifference, setTimeDifference] = useState("");
+
   const moveToTaskManager = () => {
     router.push("/tasks");
   }
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setClientTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const diff = calculateTimeDifference(new Date(serverTime), clientTime);
+    setTimeDifference(diff);
+  }, [serverTime, clientTime]);
+  
   return (
     <>
       <Head>
@@ -28,14 +59,12 @@ export default function Home() {
         <div>
           {/* Display here the server time (DD-MM-AAAA HH:mm)*/}
           <p>
-            Server time:{" "}
-            <span className="serverTime">{/* Replace with the value */}</span>
+            Server time:<span className="serverTime">{serverTime}</span>
           </p>
 
           {/* Display here the time difference between the server side and the client side */}
           <p>
-            Time diff:{" "}
-            <span className="serverTime">{/* Replace with the value */}</span>
+            Time diff: <span className="serverTime">{timeDifference}</span>
           </p>
         </div>
 
